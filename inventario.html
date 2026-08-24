@@ -142,7 +142,29 @@
               <div class="field"><label>Cantidad Asignada</label><input type="number" id="stock-cantidad" min="1" required placeholder="Ej. 5"></div>
               <div class="field"><label>Nomenclatura</label><input type="text" id="stock-nomenclatura" required placeholder="Ej. NOM-1234"></div>
               <div class="field"><label>Área Destino</label><input type="text" id="stock-area" required placeholder="Ej. RRHH, Informática, Taller"></div>
-              <div class="field" style="grid-column: span 2;"><label>Base / Comuna Destino</label><input type="text" id="stock-base-comuna" required placeholder="Ej. BASE PIEDRAS, COMUNA 8, LURO"></div>
+              <div class="field" style="grid-column: span 2;">
+                <label>Base / Comuna / Playa Destino</label>
+                <select id="stock-base-comuna" required>
+                  <option value="">-- Seleccionar destino --</option>
+                  <optgroup label="🏢 Bases">
+                    <option value="BASE PIEDRAS">Base Piedras (Chacabuco 1261)</option>
+                    <option value="BASE COCHABAMBA">Base Cochabamba (Cochabamba 1571)</option>
+                    <option value="BASE VILLA LURO">Base Villa Luro (Virgilio 212)</option>
+                    <option value="BASE OCAMPO">Base Ocampo (Ortiz de Ocampo 2571)</option>
+                    <option value="BASE NUÑEZ">Base Nuñez (La Cachila 8850)</option>
+                  </optgroup>
+                  <optgroup label="🏖️ Playas">
+                    <option value="PLAYA RIO CUARTO">Playa Río Cuarto (Herrera 2116)</option>
+                    <option value="PLAYA QUINQUELA">Playa Quinquela (Herrera 1618)</option>
+                    <option value="PLAYA SARMIENTO Y AEROPARQUE">Playa Sarmiento y Aeroparque (Av. Sarmiento 4381)</option>
+                  </optgroup>
+                  <optgroup label="🏛️ Comunas">
+                    <option value="COMUNA 15">Comuna 15 (Dorrego 690)</option>
+                    <option value="SUBSEDE COMUNA 7">Subsede Comuna 7 (Emilio Mitre 956)</option>
+                    <option value="COMUNA 9">Comuna 9 (Emilio Castro 7680)</option>
+                  </optgroup>
+                </select>
+              </div>
             </div>
             <div class="actions-row">
               <button type="submit" class="btn" style="width: auto;">Registrar egreso</button>

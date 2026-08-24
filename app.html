@@ -10,8 +10,11 @@
   <div class="app-layout">
     <aside class="sidebar">
       <div class="brand">Sistema Integral</div>
-      <a class="nav-item active" data-section="inicio">Inicio</a>
-      <a class="nav-item" data-section="avisos">Avisos</a>
+      <a class="nav-item active" href="app.html">Inicio</a>
+      <a class="nav-item" data-section="avisos" href="#!">Avisos</a>
+      <a class="nav-item" href="toners.html">Control de Tóners</a>
+      <a class="nav-item" href="inventario.html">Inventario PC</a>
+      <a class="nav-item" href="migrar.html">Migración de datos</a>
     </aside>
 
     <main class="main">
@@ -28,17 +31,24 @@
         <div class="panel">
           <h3>Bienvenido</h3>
           <p class="hint">
-            Esta es la base de tu sistema unificado. Desde la barra lateral podés navegar
-            entre módulos. El módulo "Avisos" ya funciona como ejemplo: guarda datos en
-            Realtime Database y se actualiza en tiempo real para todos los usuarios.
+            Este es el sistema unificado de la oficina. Todos los módulos comparten el mismo
+            login y la misma base de datos, y se actualizan en tiempo real para los 5 usuarios.
           </p>
         </div>
-        <div class="panel">
-          <h3>Accesos rápidos</h3>
-          <p class="hint">
-            Acá podés ir agregando enlaces a tus programas deployados en Vercel,
-            o migrarlos como módulos dentro de este sistema.
-          </p>
+        <h3 style="font-size: 1rem; margin-bottom: 14px;">Módulos</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 20px;">
+          <a class="panel card-link" href="toners.html">
+            <h3>🖨️ Control de Tóners</h3>
+            <p class="hint">Registro de cambios, stock e IPs de impresoras.</p>
+          </a>
+          <a class="panel card-link" href="inventario.html">
+            <h3>💻 Inventario PC</h3>
+            <p class="hint">Equipos, búsqueda y movimientos de stock.</p>
+          </a>
+          <a class="panel card-link" href="migrar.html">
+            <h3>📦 Migración de datos</h3>
+            <p class="hint">Copia los datos de las apps viejas a este sistema.</p>
+          </a>
         </div>
       </section>
 

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario de Equipos · Sistema Integral</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">Sistema Integral</div>
+      <a class="nav-item" href="app.html">Inicio</a>
+      <a class="nav-item" href="toners.html">Control de Tóners</a>
+      <a class="nav-item active" href="inventario.html">Inventario PC</a>
+      <a class="nav-item" href="migrar.html">Migración de datos</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h2>Inventario de Equipos</h2>
+        <div class="user-area">
+          <span id="status-badge" class="status-badge">Conectando...</span>
+          <span id="user-email" class="user-email"></span>
+          <button id="logout-btn" class="btn btn-logout">Salir</button>
+        </div>
+      </header>
+
+      <div class="tabs">
+        <button class="tab-btn active menu-btn" data-panel="ingreso">Ingreso de datos</button>
+        <button class="tab-btn menu-btn" data-panel="inventario">Inventario general</button>
+        <button class="tab-btn menu-btn" data-panel="stock">Stock · Compras</button>
+      </div>
+
+      <section id="panel-ingreso" class="tab-panel window-panel active">
+        <form id="form-equipo">
+          <div class="panel">
+            <h3>Información del sistema</h3>
+            <div class="form-grid">
+              <div class="field"><label>ID Registro</label><input type="number" id="pc-id" readonly></div>
+              <div class="field"><label>Marca</label><input type="text" id="pc-marca" required placeholder="Ej. BANGHO"></div>
+              <div class="field"><label>Modelo</label><input type="text" id="pc-modelo" required placeholder="Ej. OPTIMA T4"></div>
+              <div class="field"><label>Procesador</label><input type="text" id="pc-procesador" required placeholder="Ej. I5-7400"></div>
+              <div class="field"><label>Motherboard</label><input type="text" id="pc-motherboard" placeholder="Ej. GIGABYTE"></div>
+              <div class="field"><label>N° de Serie</label><input type="text" id="pc-n-serie" required placeholder="Código de serie"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Componentes y almacenamiento</h3>
+            <div class="form-grid">
+              <div class="field"><label>Memoria RAM</label><input type="text" id="pc-ram" required placeholder="Ej. 8GB"></div>
+              <div class="field"><label>Disco Principal</label><input type="text" id="pc-disco" required placeholder="Ej. 480GB SSD"></div>
+              <div class="field"><label>Disco Secundario</label><input type="text" id="pc-disco2" value="NO"></div>
+              <div class="field"><label>Parlantes</label><input type="text" id="pc-parlantes" value="NO"></div>
+              <div class="field"><label>Placa Wifi</label><input type="text" id="pc-wifi" value="NO"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Monitor asociado</h3>
+            <div class="form-grid">
+              <div class="field"><label>¿Tiene Monitor?</label><input type="text" id="pc-monitor" value="SI"></div>
+              <div class="field"><label>Marca Monitor</label><input type="text" id="pc-marca-monitor" placeholder="Marca"></div>
+              <div class="field"><label>Modelo Monitor</label><input type="text" id="pc-modelo-monitor" placeholder="Modelo"></div>
+              <div class="field"><label>N° Serie Monitor</label><input type="text" id="pc-serie-monitor" placeholder="N° de Serie"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Ubicación y datos de red</h3>
+            <div class="form-grid">
+              <div class="field"><label>Área de Asignación</label><input type="text" id="pc-area" required placeholder="Ej. RRHH"></div>
+              <div class="field"><label>Código BAC</label><input type="text" id="pc-bac" value="S/N"></div>
+              <div class="field"><label>Dirección MAC</label><input type="text" id="pc-mac" required placeholder="00-00-00-00-00-00"></div>
+              <div class="field"><label>Base Destino</label><input type="text" id="pc-base" required placeholder="Ej. LURO"></div>
+            </div>
+          </div>
+
+          <div class="actions-row" style="margin-bottom: 24px;">
+            <button type="button" id="btn-clear-form" class="btn btn-secondary">Limpiar campos</button>
+            <button type="submit" class="btn" style="width: auto;">Guardar registro</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="panel-inventario" class="tab-panel window-panel">
+        <div class="panel">
+          <p class="section-subtitle">Listado completo sincronizado en tiempo real. Hacé clic en un equipo para editarlo.</p>
+          <div class="field">
+            <input type="text" id="input-busqueda" placeholder="🔍 Escriba el Área o Base a buscar...">
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="tabla-inventario">
+              <thead>
+                <tr>
+                  <th>ID</th><th>Marca</th><th>Modelo</th><th>Procesador</th><th>Motherboard</th>
+                  <th>N° de Serie</th><th>Monitor</th><th>Marca Monitor</th><th>Modelo Monitor</th>
+                  <th>N° de Serie Monitor</th><th>Disco</th><th>Disco 2</th><th>Ram</th><th>Parlantes</th>
+                  <th>Placa Wifi</th><th>Área Asignación</th><th>BAC</th><th>MAC</th><th>BASE</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-stock" class="tab-panel window-panel">
+        <div class="panel">
+          <h3>Registrar movimiento de lote</h3>
+          <p class="section-subtitle">Seleccioná un producto del remito recibido para asignarle destino.</p>
+          <form id="form-stock">
+            <div class="form-grid">
+              <div class="field" style="grid-column: span 2;">
+                <label for="stock-producto">Producto del Remito</label>
+                <select id="stock-producto" required>
+                  <option value="">-- Seleccionar Producto --</option>
+                  <option value="MOUSE OPTICO 3 BOTONES USB 1000 DPI">MOUSE OPTICO 3 BOTONES USB (Cant. Lote: 30)</option>
+                  <option value="TECLADO MULTIMEDIA USB">TECLADO MULTIMEDIA USB (Cant. Lote: 30)</option>
+                  <option value="DISCO RIGIDO SOLIDO SSD 240 GB">DISCO RIGIDO SOLIDO SSD 240 GB (Cant. Lote: 10)</option>
+                  <option value="MEMORIA DDR4 8GB 3200 MHZ">MEMORIA DDR4 8GB 3200 MHZ (Cant. Lote: 5)</option>
+                  <option value="FUENTE DE ALIMENTACION 600W">FUENTE DE ALIMENTACION 600W (Cant. Lote: 5)</option>
+                  <option value="DISCO EXTERNO 1TB USB 3.0">DISCO EXTERNO 1TB USB 3.0 (Cant. Lote: 1)</option>
+                  <option value="GRASA DISIPADORA DE CALOR JERINGA 5CC">GRASA DISIPADORA JERINGA 5CC (Cant. Lote: 2)</option>
+                  <option value="ALCOHOL ISOPROPILICO BIDON 5L">ALCOHOL ISOPROPILICO BIDON 5L (Cant. Lote: 1)</option>
+                  <option value="PILA DE LITIO 3V CR2032 PACK X 5">PILA DE LITIO CR2032 PACK X 5 (Cant. Lote: 1)</option>
+                  <option value="PRECINTOS PLASTICOS 150x3.6mm BOLSA">PRECINTOS 150x3.6mm (Cant. Lote: 1)</option>
+                  <option value="PRECINTOS PLASTICOS 200x4.8mm BOLSA">PRECINTOS 200x4.8mm (Cant. Lote: 1)</option>
+                  <option value="ACEITE LUBRICANTE AEROSOL 400ML">ACEITE LUBRICANTE AEROSOL (Cant. Lote: 1)</option>
+                  <option value="ADHESIVO INSTANTANEO 2 ML">ADHESIVO INSTANTANEO 2 ML (Cant. Lote: 2)</option>
+                  <option value="PISTOLA ENCOLADORA ELECTRICA">PISTOLA ENCOLADORA ELECTRICA (Cant. Lote: 1)</option>
+                  <option value="FLUX CONTACFLUXGEL JERINGA 10CC">FLUX JERINGA 10CC (Cant. Lote: 1)</option>
+                  <option value="ESTAÑO PARA SOLDAR 60/40 ROLLO 250G">ESTAÑO ROLLO 250G (Cant. Lote: 1)</option>
+                  <option value="MALLA DESOLDANTE 2.5MM">MALLA DESOLDANTE 2.5MM (Cant. Lote: 1)</option>
+                  <option value="CONECTOR RJ45 CAT 5E BOLSA X 100">CONECTOR RJ45 CAT 5E BOLSA X 100 (Cant. Lote: 2)</option>
+                  <option value="CABLE UTP CAT 5E ROLLO X 305M">CABLE UTP CAT 5E ROLLO X 305M (Cant. Lote: 1)</option>
+                  <option value="PINZA CRIMPEADORA METALICA RJ45">PINZA CRIMPEADORA RJ45 (Cant. Lote: 1)</option>
+                  <option value="CINTA DOBLE FAZ 36mm x 30M">CINTA DOBLE FAZ 36mm x 30M (Cant. Lote: 1)</option>
+                </select>
+              </div>
+              <div class="field"><label>Cantidad Asignada</label><input type="number" id="stock-cantidad" min="1" required placeholder="Ej. 5"></div>
+              <div class="field"><label>Nomenclatura</label><input type="text" id="stock-nomenclatura" required placeholder="Ej. NOM-1234"></div>
+              <div class="field"><label>Área Destino</label><input type="text" id="stock-area" required placeholder="Ej. RRHH, Informática, Taller"></div>
+              <div class="field" style="grid-column: span 2;"><label>Base / Comuna Destino</label><input type="text" id="stock-base-comuna" required placeholder="Ej. BASE PIEDRAS, COMUNA 8, LURO"></div>
+            </div>
+            <div class="actions-row">
+              <button type="submit" class="btn" style="width: auto;">Registrar egreso</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h3>Movimientos registrados</h3>
+          <div class="table-scroll">
+            <table class="data-table" id="tabla-stock">
+              <thead>
+                <tr>
+                  <th>Origen</th><th>Producto</th><th>Cantidad</th><th>Nomenclatura</th>
+                  <th>Área</th><th>Base / Comuna / Playa</th><th>Fecha y hora</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/inventario.js"></script>
+</body>
+</html>

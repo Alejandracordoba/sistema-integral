@@ -6,13 +6,42 @@ Sistema con login centralizado para la oficina (5 usuarios), construido con HTML
 
 ```
 ├── index.html            Página de login
-├── app.html              Sistema protegido (requiere sesión)
+├── app.html              Inicio del sistema (avisos + accesos a módulos)
+├── toners.html           Módulo Control de Tóners (stock, historial, IPs)
+├── inventario.html       Módulo Inventario PC (equipos, búsqueda, stock)
+├── migrar.html           Copia datos de las bases viejas al sistema nuevo
 ├── css/styles.css        Estilos compartidos
 ├── js/firebase-config.js Configuración de Firebase
 ├── js/auth.js            Lógica de inicio de sesión
 ├── js/app.js             Guardián de sesión + módulo de avisos
+├── js/toners.js          Lógica del módulo de tóners
+├── js/inventario.js      Lógica del módulo de inventario
+├── js/migrar.js          Lógica de importación y backup
 └── database.rules.json   Reglas de seguridad de Realtime Database
 ```
+
+### Organización de los datos
+
+```
+toners/               ← venía de controltonersweb
+├── stock             { código: cantidad }
+└── historial         { registro: { fecha, area, base, codigo, remanente } }
+inventario/           ← venía de inventario-c0800
+├── equipos           { id: { Marca, Modelo, ..., BASE } }
+└── ingresos_stock    { movimiento: { producto, cantidad, ... } }
+avisos                { aviso: { texto, autor, creado } }
+```
+
+## Migración de los sistemas viejos
+
+1. Iniciá sesión en el sistema.
+2. Entrá a **Migración de datos** en el menú lateral.
+3. Tocá **Descargar backup actual** (por seguridad).
+4. Tocá **Importar tóners** y después **Importar inventario**.
+
+Es una copia: las apps viejas (`control-toners-web` e `inventario-pc`) y sus bases
+siguen funcionando intactas. Cuando verifiques que todo está en el sistema nuevo,
+podés borrar esos deployments desde Vercel si querés.
 
 ## 1. Crear el proyecto en Firebase
 

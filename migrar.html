@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migración de datos · Sistema Integral</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">Sistema Integral</div>
+      <a class="nav-item" href="app.html">Inicio</a>
+      <a class="nav-item" href="toners.html">Control de Tóners</a>
+      <a class="nav-item" href="inventario.html">Inventario PC</a>
+      <a class="nav-item active" href="migrar.html">Migración de datos</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h2>Migración de datos</h2>
+        <div class="user-area">
+          <span id="status-badge" class="status-badge">Conectando...</span>
+          <span id="user-email" class="user-email"></span>
+          <button id="logout-btn" class="btn btn-logout">Salir</button>
+        </div>
+      </header>
+
+      <section class="section active">
+        <div class="panel">
+          <h3>Cómo funciona</h3>
+          <p class="hint">
+            Esta página copia los datos de tus dos sistemas viejos hacia la base del Sistema Integral.
+            Es una copia, no un traslado: las apps viejas en Vercel y sus bases de Firebase siguen
+            intactas. Cuando confirmes que todo está acá, podés darlas de baja tranquila.
+          </p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+          <div class="panel">
+            <h3>1 · Backup preventivo</h3>
+            <p class="hint" style="margin-bottom: 16px;">Descarga todo el contenido actual del sistema como archivo JSON. Recomendado antes de importar.</p>
+            <button id="btn-backup" class="btn btn-secondary">Descargar backup actual</button>
+          </div>
+
+          <div class="panel">
+            <h3>2 · Importar Control Tóners</h3>
+            <p class="hint" style="margin-bottom: 16px;">Copia el stock y el historial completo desde <strong>controltonersweb</strong>. Si ya había datos de tóners acá, te va a pedir confirmación.</p>
+            <button id="btn-import-toners" class="btn">Importar tóners</button>
+          </div>
+
+          <div class="panel">
+            <h3>3 · Importar Inventario PC</h3>
+            <p class="hint" style="margin-bottom: 16px;">Copia todos los equipos y los movimientos de stock desde <strong>inventario-c0800</strong>.</p>
+            <button id="btn-import-inventario" class="btn">Importar inventario</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Registro de actividad</h3>
+          <div id="log" class="hint" style="min-height: 60px; font-family: monospace;"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/migrar.js"></script>
+</body>
+</html>

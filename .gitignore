@@ -1,0 +1,4 @@
+.vercel
+.firebase
+*.log
+.DS_Store

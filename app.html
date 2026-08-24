@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Integral</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">Sistema Integral</div>
+      <a class="nav-item active" data-section="inicio">Inicio</a>
+      <a class="nav-item" data-section="avisos">Avisos</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h2 id="section-title">Inicio</h2>
+        <div class="user-area">
+          <span id="status-badge" class="status-badge">Conectando...</span>
+          <span id="user-email" class="user-email"></span>
+          <button id="logout-btn" class="btn btn-logout">Salir</button>
+        </div>
+      </header>
+
+      <section id="section-inicio" class="section active">
+        <div class="panel">
+          <h3>Bienvenido</h3>
+          <p class="hint">
+            Esta es la base de tu sistema unificado. Desde la barra lateral podés navegar
+            entre módulos. El módulo "Avisos" ya funciona como ejemplo: guarda datos en
+            Realtime Database y se actualiza en tiempo real para todos los usuarios.
+          </p>
+        </div>
+        <div class="panel">
+          <h3>Accesos rápidos</h3>
+          <p class="hint">
+            Acá podés ir agregando enlaces a tus programas deployados en Vercel,
+            o migrarlos como módulos dentro de este sistema.
+          </p>
+        </div>
+      </section>
+
+      <section id="section-avisos" class="section">
+        <div class="panel">
+          <h3>Publicar un aviso</h3>
+          <form id="aviso-form">
+            <div class="field">
+              <textarea id="aviso-texto" rows="3" placeholder="Escribí el aviso..." required></textarea>
+            </div>
+            <button type="submit" class="btn" style="max-width: 200px;">Publicar</button>
+          </form>
+        </div>
+        <div class="panel">
+          <h3>Avisos recientes</h3>
+          <div id="avisos-list"><div class="empty-state">Cargando...</div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

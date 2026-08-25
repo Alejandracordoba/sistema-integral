@@ -1,7 +1,7 @@
 import { ref, onValue, push, remove, set } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import { auth, db } from "./firebase-config.js";
-import { escapeHtml, copiarAlPortapapeles, descargarBat } from "./utils-red.js";
+import { escapeHtml, copiarAlPortapapeles } from "./utils-red.js";
 
 const SEED = [
   {
@@ -113,8 +113,6 @@ function renderDvr(dvr) {
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button class="btn btn-inline btn-secondary" data-accion="copiar-ip" data-ip="${escapeHtml(dvr.ip)}">📋 Copiar IP</button>
           <a class="btn btn-inline btn-secondary" href="http://${escapeHtml(dvr.ip)}" target="_blank" rel="noopener">🌐 Abrir</a>
-          <button class="btn btn-inline btn-secondary" data-accion="bat" data-nombre="${escapeHtml(dvr.nombre)}" data-ip="${escapeHtml(dvr.ip)}">🔍 Diagnóstico</button>
-          <button class="btn btn-inline btn-secondary" data-accion="agregar-cred" data-id="${dvr.id}" data-nombre="${escapeHtml(dvr.nombre)}">➕ Credencial</button>
           <button class="btn-delete" data-accion="eliminar-dvr" data-id="${dvr.id}" data-nombre="${escapeHtml(dvr.nombre)}">Eliminar DVR</button>
         </div>
       </div>
@@ -180,12 +178,6 @@ document.addEventListener("click", async (e) => {
       case "copiar-clave":
         await copiarAlPortapapeles(btn.dataset.clave, "Contraseña copiada al portapapeles.");
         break;
-      case "bat":
-        descargarBat(btn.dataset.nombre, btn.dataset.ip);
-        break;
-      case "agregar-cred":
-        await agregarCredencial(btn.dataset.id, btn.dataset.nombre);
-        break;
       case "eliminar-dvr":
         await eliminarDvr(btn.dataset.id, btn.dataset.nombre);
         break;
@@ -215,17 +207,6 @@ formNuevo.addEventListener("submit", async (e) => {
 
   formNuevo.reset();
 });
-
-async function agregarCredencial(dvrId, nombre) {
-  const etiqueta = prompt(`Perfil o rol (ej: Admin, Taller) para "${nombre}":`) ?? "";
-  if (etiqueta === null) return;
-  const usuario = prompt("Usuario:");
-  if (!usuario) return;
-  const clave = prompt("Contraseña:");
-  if (!clave) return;
-
-  await push(ref(db, `dvrs/${dvrId}/credenciales`), { etiqueta: etiqueta.trim(), usuario: usuario.trim(), clave });
-}
 
 async function eliminarDvr(id, nombre) {
   if (!confirm(`¿Eliminar el DVR "${nombre}" con todas sus credenciales?`)) return;

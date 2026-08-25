@@ -4,15 +4,6 @@ export function escapeHtml(str) {
   return div.innerHTML;
 }
 
-export function slug(texto) {
-  return texto
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
 export async function copiarAlPortapapeles(texto, mensaje) {
   try {
     await navigator.clipboard.writeText(texto);
@@ -25,34 +16,6 @@ export async function copiarAlPortapapeles(texto, mensaje) {
     aux.remove();
   }
   avisar(mensaje || `Copiado: ${texto}`);
-}
-
-export function descargarBat(nombre, ip) {
-  const contenido = [
-    "@echo off",
-    `title Diagnostico de conectividad - ${nombre}`,
-    "echo ============================================",
-    `echo   TEST DE CONECTIVIDAD: ${nombre}`,
-    `echo   IP: ${ip}`,
-    "echo ============================================",
-    "echo.",
-    `ping -n 4 ${ip}`,
-    "echo.",
-    'set /p continuar="Desea hacer tracert a esta IP? (S/N): "',
-    'if /i "%continuar%"=="S" tracert ' + ip,
-    "echo.",
-    "pause"
-  ].join("\r\n");
-
-  const blob = new Blob(["\uFEFF" + contenido], { type: "application/x-bat" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `test-${slug(nombre)}.bat`;
-  a.click();
-  URL.revokeObjectURL(url);
-
-  avisar(`Se descargó test-${slug(nombre)}.bat. Abrilo con doble clic para ver el cmd en tu PC.`);
 }
 
 export function avisar(mensaje) {

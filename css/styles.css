@@ -394,6 +394,15 @@ body {
   background: var(--bg);
 }
 
+.btn-inline {
+  width: auto;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
 .actions-row {
   display: flex;
   gap: 10px;

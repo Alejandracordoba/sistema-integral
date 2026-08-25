@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conectividad · Sistema Integral</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">Sistema Integral</div>
+      <a class="nav-item" href="app.html">Inicio</a>
+      <a class="nav-item" href="toners.html">Control de Tóners</a>
+      <a class="nav-item" href="inventario.html">Inventario PC</a>
+      <a class="nav-item active" href="conectividad.html">Conectividad</a>
+      <a class="nav-item" href="migrar.html">Migración de datos</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h2>Panel de Conectividad</h2>
+        <div class="user-area">
+          <span id="status-badge" class="status-badge">Conectando...</span>
+          <span id="user-email" class="user-email"></span>
+          <button id="logout-btn" class="btn btn-logout">Salir</button>
+        </div>
+      </header>
+
+      <section class="section active">
+        <div class="panel">
+          <h3>Agregar nueva sede</h3>
+          <form id="form-nueva">
+            <div class="form-grid">
+              <div class="field"><label>Nombre</label><input type="text" id="nueva-nombre" required placeholder="Ej. Base Nueva"></div>
+              <div class="field"><label>IP (puerta de enlace)</label><input type="text" id="nueva-ip" required placeholder="Ej. 10.68.8.2"></div>
+              <div class="field"><label>Grupo</label>
+                <select id="nueva-grupo">
+                  <option value="BASES">Base operativa</option>
+                  <option value="PLAYAS">Playa / Pañol</option>
+                </select>
+              </div>
+              <div class="field" style="align-self: end;"><button type="submit" class="btn" style="width: auto;">Agregar</button></div>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h3>Bases operativas</h3>
+          <div class="table-scroll">
+            <table class="data-table" id="tabla-bases">
+              <thead>
+                <tr><th>Sede</th><th>IP</th><th>Acciones</th><th style="width: 90px;"></th></tr>
+              </thead>
+              <tbody><tr><td colspan="4" class="empty-state">Cargando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Playas y pañol</h3>
+          <div class="table-scroll">
+            <table class="data-table" id="tabla-playas">
+              <thead>
+                <tr><th>Sede</th><th>IP</th><th>Acciones</th><th style="width: 90px;"></th></tr>
+              </thead>
+              <tbody><tr><td colspan="4" class="empty-state">Cargando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>¿Cómo funciona el diagnóstico?</h3>
+          <p class="hint">
+            Los navegadores bloquean hacer ping directamente desde una página web por seguridad.
+            El botón <strong>Diagnóstico</strong> descarga un archivo .bat: al abrirlo con doble clic
+            se lanza una ventana de cmd en tu PC que hace ping a la IP y te ofrece hacer tracert.
+            El botón <strong>Abrir</strong> intenta entrar a la interfaz web del equipo (routers, DVRs, impresoras).
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/conectividad.js"></script>
+</body>
+</html>

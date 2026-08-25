@@ -43,6 +43,7 @@ const userEmailEl = document.getElementById("user-email");
 const logoutBtn = document.getElementById("logout-btn");
 const statusBadge = document.getElementById("status-badge");
 const contenedor = document.getElementById("lista-dvrs");
+const estadoEl = document.getElementById("estado-dvrs");
 const formNuevo = document.getElementById("form-nuevo-dvr");
 
 onAuthStateChanged(auth, (user) => {
@@ -99,15 +100,37 @@ async function asegurarSemilla(snapshot) {
 
 function render(snapshot) {
   const dvrs = [];
-  snapshot.forEach((child) => dvrs.push({ id: child.key, ...child.val() }));
+  snapshot.forEach((child) => {
+    const valor = child.val();
+    if (valor && typeof valor === "object") {
+      dvrs.push({ id: child.key, ...valor });
+    }
+  });
   dvrs.sort((a, b) => String(a.nombre).localeCompare(String(b.nombre)));
+
+  if (estadoEl) {
+    estadoEl.textContent = `Equipos en la base: ${dvrs.length} de 5 precargados. `;
+  }
 
   if (dvrs.length === 0) {
     contenedor.innerHTML = '<div class="empty-state">No hay DVRs cargados.</div>';
     return;
   }
 
-  contenedor.innerHTML = dvrs.map(renderDvr).join("");
+  contenedor.innerHTML = dvrs
+    .map((dvr) => {
+      try {
+        return renderDvr(dvr);
+      } catch (err) {
+        console.error("Error dibujando el DVR", dvr.id, err);
+        return `
+          <div class="panel">
+            <h3>⚠️ ${escapeHtml(dvr.nombre || dvr.id)}</h3>
+            <p class="hint">Este equipo tiene datos con un formato inesperado: ${escapeHtml(err.message)}</p>
+          </div>`;
+      }
+    })
+    .join("");
 }
 
 function renderDvr(dvr) {

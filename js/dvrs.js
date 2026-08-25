@@ -5,21 +5,25 @@ import { escapeHtml, copiarAlPortapapeles, avisar } from "./utils-red.js";
 
 const SEED = [
   {
+    id: "dvr-base-ocampo",
     nombre: "Base Ocampo",
     ip: "172.17.5.252",
     credenciales: [{ etiqueta: "", usuario: "Admin", clave: "transito99" }]
   },
   {
+    id: "dvr-base-cochabamba",
     nombre: "Base Cochabamba",
     ip: "192.168.104.120",
     credenciales: [{ etiqueta: "", usuario: "admin", clave: "chaca123" }]
   },
   {
+    id: "dvr-piedras-agentes",
     nombre: "Base Piedras (Agentes)",
     ip: "10.68.9.198",
     credenciales: [{ etiqueta: "", usuario: "sebas", clave: "123456" }]
   },
   {
+    id: "dvr-piedras-bici",
     nombre: "Base Piedras (Bici)",
     ip: "10.68.9.199",
     credenciales: [
@@ -28,6 +32,7 @@ const SEED = [
     ]
   },
   {
+    id: "dvr-seguridad-vial",
     nombre: "Seguridad Vial",
     ip: "10.68.4.254",
     credenciales: [
@@ -84,17 +89,35 @@ function normalizar(texto) {
 }
 
 async function asegurarSemilla(snapshot) {
-  const existentes = new Set();
-  snapshot.forEach((child) => existentes.add(normalizar(child.child("nombre").val())));
+  const vistos = new Map();
+  const duplicados = [];
 
-  const faltantes = SEED.filter((dvr) => !existentes.has(normalizar(dvr.nombre)));
+  snapshot.forEach((child) => {
+    const nombre = normalizar(child.child("nombre").val());
+    if (vistos.has(nombre)) {
+      duplicados.push(child.key);
+    } else {
+      vistos.set(nombre, child.key);
+    }
+  });
 
-  for (const dvr of faltantes) {
-    await push(ref(db, "dvrs"), dvr);
+  for (const id of duplicados) {
+    await remove(ref(db, `dvrs/${id}`));
   }
 
-  if (faltantes.length > 0) {
-    avisar(`Se restauraron ${faltantes.length} DVR(s) precargado(s) que faltaban.`);
+  const faltantes = SEED.filter((dvr) => !vistos.has(normalizar(dvr.nombre)));
+
+  for (const dvr of faltantes) {
+    const { id, ...datos } = dvr;
+    await set(ref(db, `dvrs/${id}`), datos);
+  }
+
+  if (duplicados.length > 0 && faltantes.length > 0) {
+    avisar(`Se quitaron ${duplicados.length} duplicado(s) y se restauraron ${faltantes.length} DVR(s).`);
+  } else if (duplicados.length > 0) {
+    avisar(`Se quitaron ${duplicados.length} DVR(s) duplicado(s).`);
+  } else if (faltantes.length > 0) {
+    avisar(`Se restauraron ${faltantes.length} DVR(s) precargado(s).`);
   }
 }
 

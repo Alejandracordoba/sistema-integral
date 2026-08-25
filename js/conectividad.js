@@ -1,6 +1,7 @@
 import { ref, onValue, push, remove, set } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import { auth, db } from "./firebase-config.js";
+import { escapeHtml, copiarAlPortapapeles, descargarBat } from "./utils-red.js";
 
 const SEED = [
   { nombre: "Base Piedras", ip: "10.68.8.2", grupo: "BASES" },
@@ -104,7 +105,7 @@ document.addEventListener("click", (e) => {
 
   const { accion, id, ip, nombre } = btn.dataset;
 
-  if (accion === "copiar") copiarAlPortapapeles(ip);
+  if (accion === "copiar") copiarAlPortapapeles(ip, `IP ${ip} copiada al portapapeles.`);
 
   if (accion === "bat") descargarBat(nombre, ip);
 
@@ -124,74 +125,7 @@ formNueva.addEventListener("submit", async (e) => {
   formNueva.reset();
 });
 
-async function copiarAlPortapapeles(texto) {
-  try {
-    await navigator.clipboard.writeText(texto);
-    avisar(`IP ${texto} copiada al portapapeles.`);
-  } catch {
-    const aux = document.createElement("textarea");
-    aux.value = texto;
-    document.body.appendChild(aux);
-    aux.select();
-    document.execCommand("copy");
-    aux.remove();
-    avisar(`IP ${texto} copiada al portapapeles.`);
-  }
-}
-
-function descargarBat(nombre, ip) {
-  const contenido = [
-    "@echo off",
-    `title Diagnostico de conectividad - ${nombre}`,
-    "echo ============================================",
-    `echo   TEST DE CONECTIVIDAD: ${nombre}`,
-    `echo   IP: ${ip}`,
-    "echo ============================================",
-    "echo.",
-    `ping -n 4 ${ip}`,
-    "echo.",
-    'set /p continuar="Desea hacer tracert a esta IP? (S/N): "',
-    'if /i "%continuar%"=="S" tracert ' + ip,
-    "echo.",
-    "pause"
-  ].join("\r\n");
-
-  const blob = new Blob(["\uFEFF" + contenido], { type: "application/x-bat" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `test-${slug(nombre)}.bat`;
-  a.click();
-  URL.revokeObjectURL(url);
-
-  avisar(`Se descargó test-${slug(nombre)}.bat. Abrilo con doble clic para ver el cmd en tu PC.`);
-}
-
-function slug(texto) {
-  return texto
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
 async function eliminarSede(id, nombre) {
   if (!confirm(`¿Eliminar "${nombre}" del panel de conectividad?`)) return;
   await remove(ref(db, `conectividad/equipos/${id}`));
-}
-
-function avisar(mensaje) {
-  const toast = document.createElement("div");
-  toast.textContent = mensaje;
-  toast.style.cssText =
-    "position: fixed; bottom: 24px; right: 24px; background: #0f172a; color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 0.88rem; box-shadow: 0 6px 20px rgba(0,0,0,.25); z-index: 999; max-width: 380px;";
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
-}
-
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str ?? "";
-  return div.innerHTML;
 }

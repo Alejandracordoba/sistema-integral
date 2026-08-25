@@ -403,6 +403,19 @@ body {
   text-align: center;
 }
 
+code.clave-oculta,
+code.clave-visible {
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 0.85rem;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+code.clave-visible {
+  color: var(--danger);
+}
+
 .actions-row {
   display: flex;
   gap: 10px;

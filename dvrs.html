@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DVRs · Sistema Integral</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">Sistema Integral</div>
+      <a class="nav-item" href="app.html">Inicio</a>
+      <a class="nav-item" href="toners.html">Control de Tóners</a>
+      <a class="nav-item" href="inventario.html">Inventario PC</a>
+      <a class="nav-item" href="conectividad.html">Conectividad</a>
+      <a class="nav-item active" href="dvrs.html">DVRs</a>
+      <a class="nav-item" href="migrar.html">Migración de datos</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h2>Acceso a DVRs</h2>
+        <div class="user-area">
+          <span id="status-badge" class="status-badge">Conectando...</span>
+          <span id="user-email" class="user-email"></span>
+          <button id="logout-btn" class="btn btn-logout">Salir</button>
+        </div>
+      </header>
+
+      <section class="section active">
+        <div class="panel">
+          <h3>Agregar nuevo DVR</h3>
+          <form id="form-nuevo-dvr">
+            <div class="form-grid">
+              <div class="field"><label>Nombre / Ubicación</label><input type="text" id="dvr-nombre" required placeholder="Ej. Base Nueva"></div>
+              <div class="field"><label>IP</label><input type="text" id="dvr-ip" required placeholder="Ej. 10.68.9.198"></div>
+              <div class="field"><label>Perfil (opcional)</label><input type="text" id="dvr-etiqueta" placeholder="Ej. Admin, Taller"></div>
+              <div class="field"><label>Usuario</label><input type="text" id="dvr-usuario" required></div>
+              <div class="field"><label>Contraseña</label><input type="text" id="dvr-clave" required></div>
+              <div class="field" style="align-self: end;"><button type="submit" class="btn" style="width: auto;">Agregar DVR</button></div>
+            </div>
+          </form>
+          <p class="hint" style="margin-top: 10px;">Después podés sumar más usuarios a cada DVR con el botón "➕ Credencial".</p>
+        </div>
+
+        <p class="hint" style="margin-bottom: 16px;">
+          Las contraseñas se ocultan por defecto y se copian con un clic. Para equipos que usan el
+          plugin viejo de Internet Explorer, activá el <strong>modo IE de Microsoft Edge</strong> y abrí la IP desde ahí.
+        </p>
+
+        <div id="lista-dvrs">
+          <div class="empty-state">Cargando DVRs...</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/dvrs.js"></script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import { ref, onValue, push, remove, set } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import { auth, db } from "./firebase-config.js";
-import { escapeHtml, copiarAlPortapapeles } from "./utils-red.js";
+import { escapeHtml, copiarAlPortapapeles, avisar } from "./utils-red.js";
 
 const SEED = [
   {
@@ -63,22 +63,37 @@ onValue(ref(db, ".info/connected"), (snap) => {
   statusBadge.textContent = snap.val() === true ? "En línea" : "Sin conexión";
 });
 
-let primeraCarga = true;
+let semillaVerificada = false;
 
 onValue(ref(db, "dvrs"), async (snapshot) => {
-  if (primeraCarga) {
-    primeraCarga = false;
-    if (!snapshot.exists()) {
-      await sembrarInicial();
-      return;
-    }
-  }
   render(snapshot);
+
+  if (semillaVerificada) return;
+  semillaVerificada = true;
+
+  try {
+    await asegurarSemilla(snapshot);
+  } catch (err) {
+    alert("No se pudieron cargar los DVRs precargados: " + err.message);
+  }
 });
 
-async function sembrarInicial() {
-  for (const dvr of SEED) {
+function normalizar(texto) {
+  return String(texto || "").trim().toLowerCase();
+}
+
+async function asegurarSemilla(snapshot) {
+  const existentes = new Set();
+  snapshot.forEach((child) => existentes.add(normalizar(child.child("nombre").val())));
+
+  const faltantes = SEED.filter((dvr) => !existentes.has(normalizar(dvr.nombre)));
+
+  for (const dvr of faltantes) {
     await push(ref(db, "dvrs"), dvr);
+  }
+
+  if (faltantes.length > 0) {
+    avisar(`Se restauraron ${faltantes.length} DVR(s) precargado(s) que faltaban.`);
   }
 }
 
@@ -195,17 +210,30 @@ formNuevo.addEventListener("submit", async (e) => {
   const etiqueta = document.getElementById("dvr-etiqueta").value.trim();
   const usuario = document.getElementById("dvr-usuario").value.trim();
   const clave = document.getElementById("dvr-clave").value;
+  const btn = formNuevo.querySelector('button[type="submit"]');
 
-  if (!nombre || !ip || !usuario || !clave) return;
+  if (!nombre || !ip || !usuario || !clave) {
+    alert("Completá nombre, IP, usuario y contraseña.");
+    return;
+  }
 
-  const nuevaRef = push(ref(db, "dvrs"));
-  await set(nuevaRef, {
-    nombre,
-    ip,
-    credenciales: { [nuevaRef.key + "-c1"]: { etiqueta, usuario, clave } }
-  });
+  btn.disabled = true;
 
-  formNuevo.reset();
+  try {
+    const nuevaRef = push(ref(db, "dvrs"));
+    await set(nuevaRef, {
+      nombre,
+      ip,
+      credenciales: { [`${nuevaRef.key}-c1`]: { etiqueta, usuario, clave } }
+    });
+
+    formNuevo.reset();
+    avisar(`DVR "${nombre}" agregado correctamente.`);
+  } catch (err) {
+    alert("No se pudo guardar el DVR. Motivo: " + (err.message || err.code));
+  } finally {
+    btn.disabled = false;
+  }
 });
 
 async function eliminarDvr(id, nombre) {

@@ -70,29 +70,41 @@ inputBusqueda.addEventListener("input", () => {
 
 document.getElementById("btn-clear-form").addEventListener("click", () => {
   formEquipo.reset();
+  document.getElementById("pc-tipo").value = "ESCRITORIO";
+  adaptarPorTipo("ESCRITORIO");
   asignarProximoId();
 });
+
+adaptarPorTipo("ESCRITORIO");
 
 formEquipo.addEventListener("submit", async (e) => {
   e.preventDefault();
   const currentId = pcIdInput.value;
+  const tipoSel = (document.getElementById("pc-tipo").value || "ESCRITORIO").toUpperCase();
+  const esNotebook = tipoSel === "NOTEBOOK";
+  const esAiO = tipoSel === "ALL-IN-ONE";
+  const ocultarMonitor = esNotebook || esAiO;
 
   const equipoPayload = {
     "ID": parseInt(currentId),
+    "Tipo": tipoSel,
     "Marca": document.getElementById("pc-marca").value.toUpperCase(),
     "Modelo": document.getElementById("pc-modelo").value,
     "Procesador": document.getElementById("pc-procesador").value,
     "Motherboard": document.getElementById("pc-motherboard").value || "S/D",
     "N° de Serie": document.getElementById("pc-n-serie").value,
-    "Monitor": document.getElementById("pc-monitor").value.toUpperCase(),
-    "Marca Monitor": document.getElementById("pc-marca-monitor").value || "NO",
-    "Modelo Monitor": document.getElementById("pc-modelo-monitor").value || "NO",
-    "N° de Serie Monitor": document.getElementById("pc-serie-monitor").value || "NO",
+    "Monitor": ocultarMonitor ? "INTEGRADO" : (document.getElementById("pc-monitor").value.toUpperCase()),
+    "Marca Monitor": ocultarMonitor ? "INTEGRADO" : (document.getElementById("pc-marca-monitor").value || "NO"),
+    "Modelo Monitor": ocultarMonitor ? "INTEGRADO" : (document.getElementById("pc-modelo-monitor").value || "NO"),
+    "N° de Serie Monitor": ocultarMonitor ? "N/A" : (document.getElementById("pc-serie-monitor").value || "NO"),
     "Disco": document.getElementById("pc-disco").value,
     "Disco 2": document.getElementById("pc-disco2").value || "NO",
     "Ram": document.getElementById("pc-ram").value,
-    "Parlantes": document.getElementById("pc-parlantes").value.toUpperCase(),
-    "Placa Wifi": document.getElementById("pc-wifi").value.toUpperCase(),
+    "Parlantes": esNotebook ? "INTEGRADOS" : (document.getElementById("pc-parlantes").value.toUpperCase()),
+    "Placa Wifi": esNotebook ? "INTEGRADA" : (document.getElementById("pc-wifi").value.toUpperCase()),
+    "Batería": esNotebook ? document.getElementById("pc-bateria").value : "",
+    "Cargador": esNotebook ? document.getElementById("pc-cargador").value : "",
+    "Pantalla": esNotebook ? document.getElementById("pc-pantalla").value : "",
     "Área Asignación": document.getElementById("pc-area").value.toUpperCase(),
     "BAC": document.getElementById("pc-bac").value || "S/N",
     "MAC": document.getElementById("pc-mac").value.toUpperCase(),
@@ -165,17 +177,53 @@ function renderStock(movimientos) {
 }
 
 const COLUMNAS = [
-  ["ID"], ["Marca"], ["Modelo"], ["Procesador"], ["Motherboard"],
+  ["ID"], ["Tipo"], ["Marca"], ["Modelo"], ["Procesador"], ["Motherboard"],
   ["N° de Serie"], ["Monitor"], ["Marca Monitor"], ["Modelo Monitor"],
   ["N° de Serie Monitor"], ["Disco"], ["Disco 2"], ["Ram"], ["Parlantes"],
-  ["Placa Wifi"], ["Área Asignación"], ["BAC"], ["MAC"], ["BASE"]
+  ["Placa Wifi"], ["Batería"], ["Cargador"], ["Pantalla"],
+  ["Área Asignación"], ["BAC"], ["MAC"], ["BASE"]
 ];
+
+function ocultarCampo(id, oculto) {
+  const wrap = document.getElementById(id);
+  if (wrap) wrap.classList.toggle("hidden", oculto);
+}
+
+function adaptarPorTipo(tipo) {
+  tipo = (tipo || "ESCRITORIO").toUpperCase();
+  const esNotebook = tipo === "NOTEBOOK";
+  const esAiO = tipo === "ALL-IN-ONE";
+  const esPortatil = esNotebook || esAiO;
+
+  ocultarCampo("wrap-parlantes", esNotebook);
+  ocultarCampo("wrap-wifi", esNotebook);
+  ocultarCampo("wrap-bateria", !esNotebook);
+  ocultarCampo("wrap-cargador", !esNotebook);
+  ocultarCampo("wrap-pantalla", !esPortatil);
+  ocultarCampo("wrap-monitor", esPortatil);
+  ocultarCampo("wrap-marca-monitor", esPortatil);
+  ocultarCampo("wrap-modelo-monitor", esPortatil);
+  ocultarCampo("wrap-serie-monitor", esPortatil);
+
+  document.getElementById("monitor-titulo").textContent =
+    esNotebook ? "Pantalla integrada" : (esAiO ? "Pantalla integrada (All-in-One)" : "Monitor asociado");
+}
+
+document.getElementById("pc-tipo").addEventListener("change", (e) => {
+  adaptarPorTipo(e.target.value);
+});
+
+function tipoDe(p) {
+  const t = (p["Tipo"] || "").toUpperCase();
+  if (t === "NOTEBOOK" || t === "ALL-IN-ONE") return t;
+  return "ESCRITORIO";
+}
 
 function llenarTabla(datos, tbody) {
   tbody.innerHTML = "";
 
   if (datos.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="19" class="empty-state">No se encontraron registros.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="23" class="empty-state">No se encontraron registros.</td></tr>';
     return;
   }
 
@@ -196,21 +244,28 @@ function llenarTabla(datos, tbody) {
 }
 
 function cargarEnFormulario(p) {
+  const tipo = tipoDe(p);
+  document.getElementById("pc-tipo").value = p["Tipo"] === "ALL-IN-ONE" ? "ALL-IN-ONE" : tipo;
+  adaptarPorTipo(tipo);
+
   document.getElementById("pc-id").value = p["ID"] ?? "";
   document.getElementById("pc-marca").value = p["Marca"] ?? "";
   document.getElementById("pc-modelo").value = p["Modelo"] ?? "";
   document.getElementById("pc-procesador").value = p["Procesador"] ?? "";
   document.getElementById("pc-motherboard").value = p["Motherboard"] === "S/D" ? "" : (p["Motherboard"] ?? "");
   document.getElementById("pc-n-serie").value = p["N° de Serie"] ?? "";
-  document.getElementById("pc-monitor").value = p["Monitor"] ?? "";
-  document.getElementById("pc-marca-monitor").value = p["Marca Monitor"] === "NO" ? "" : (p["Marca Monitor"] ?? "");
-  document.getElementById("pc-modelo-monitor").value = p["Modelo Monitor"] === "NO" ? "" : (p["Modelo Monitor"] ?? "");
-  document.getElementById("pc-serie-monitor").value = p["N° de Serie Monitor"] === "NO" ? "" : (p["N° de Serie Monitor"] ?? "");
+  document.getElementById("pc-monitor").value = p["Monitor"] === "INTEGRADO" ? "" : (p["Monitor"] ?? "");
+  document.getElementById("pc-marca-monitor").value = (p["Marca Monitor"] === "NO" || p["Marca Monitor"] === "INTEGRADO") ? "" : (p["Marca Monitor"] ?? "");
+  document.getElementById("pc-modelo-monitor").value = (p["Modelo Monitor"] === "NO" || p["Modelo Monitor"] === "INTEGRADO") ? "" : (p["Modelo Monitor"] ?? "");
+  document.getElementById("pc-serie-monitor").value = (p["N° de Serie Monitor"] === "NO" || p["N° de Serie Monitor"] === "N/A") ? "" : (p["N° de Serie Monitor"] ?? "");
   document.getElementById("pc-disco").value = p["Disco"] ?? "";
   document.getElementById("pc-disco2").value = p["Disco 2"] === "NO" ? "" : (p["Disco 2"] ?? "");
   document.getElementById("pc-ram").value = p["Ram"] ?? "";
-  document.getElementById("pc-parlantes").value = p["Parlantes"] ?? "";
-  document.getElementById("pc-wifi").value = p["Placa Wifi"] ?? "";
+  document.getElementById("pc-parlantes").value = p["Parlantes"] === "INTEGRADOS" ? "" : (p["Parlantes"] ?? "");
+  document.getElementById("pc-wifi").value = p["Placa Wifi"] === "INTEGRADA" ? "" : (p["Placa Wifi"] ?? "");
+  document.getElementById("pc-bateria").value = p["Batería"] || "BUENA";
+  document.getElementById("pc-cargador").value = p["Cargador"] || "SI";
+  document.getElementById("pc-pantalla").value = p["Pantalla"] ?? "";
   document.getElementById("pc-area").value = p["Área Asignación"] ?? "";
   document.getElementById("pc-bac").value = p["BAC"] === "S/N" ? "" : (p["BAC"] ?? "");
   document.getElementById("pc-mac").value = p["MAC"] ?? "";

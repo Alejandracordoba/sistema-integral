@@ -39,6 +39,14 @@
             <h3>Información del sistema</h3>
             <div class="form-grid">
               <div class="field"><label>ID Registro</label><input type="number" id="pc-id" readonly></div>
+              <div class="field">
+                <label>Tipo de equipo</label>
+                <select id="pc-tipo">
+                  <option value="ESCRITORIO">Escritorio</option>
+                  <option value="NOTEBOOK">Notebook</option>
+                  <option value="ALL-IN-ONE">All-in-One</option>
+                </select>
+              </div>
               <div class="field"><label>Marca</label><input type="text" id="pc-marca" required placeholder="Ej. BANGHO"></div>
               <div class="field"><label>Modelo</label><input type="text" id="pc-modelo" required placeholder="Ej. OPTIMA T4"></div>
               <div class="field"><label>Procesador</label><input type="text" id="pc-procesador" required placeholder="Ej. I5-7400"></div>
@@ -53,25 +61,35 @@
               <div class="field"><label>Memoria RAM</label><input type="text" id="pc-ram" required placeholder="Ej. 8GB"></div>
               <div class="field"><label>Disco Principal</label><input type="text" id="pc-disco" required placeholder="Ej. 480GB SSD"></div>
               <div class="field"><label>Disco Secundario</label><input type="text" id="pc-disco2" value="NO"></div>
-              <div class="field"><label>Parlantes</label><input type="text" id="pc-parlantes" value="NO"></div>
-              <div class="field"><label>Placa Wifi</label><input type="text" id="pc-wifi" value="NO"></div>
+              <div class="field" id="wrap-parlantes"><label>Parlantes</label><input type="text" id="pc-parlantes" value="NO"></div>
+              <div class="field" id="wrap-wifi"><label>Placa Wifi</label><input type="text" id="pc-wifi" value="NO"></div>
+              <div class="field" id="wrap-bateria"><label>Batería</label><select id="pc-bateria">
+                <option value="BUENA">Buena</option>
+                <option value="REGULAR">Regular</option>
+                <option value="REEMPLAZAR">Reemplazar</option>
+              </select></div>
+              <div class="field" id="wrap-cargador"><label>Cargador</label><select id="pc-cargador">
+                <option value="SI">Sí</option>
+                <option value="NO">No</option>
+              </select></div>
+              <div class="field" id="wrap-pantalla"><label>Pantalla (pulgadas)</label><input type="text" id="pc-pantalla" placeholder="Ej. 15.6"></div>
             </div>
           </div>
 
           <div class="panel">
-            <h3>Monitor asociado</h3>
+            <h3 id="monitor-titulo">Monitor asociado</h3>
             <div class="form-grid">
-              <div class="field"><label>¿Tiene Monitor?</label><input type="text" id="pc-monitor" value="SI"></div>
-              <div class="field"><label>Marca Monitor</label><input type="text" id="pc-marca-monitor" placeholder="Marca"></div>
-              <div class="field"><label>Modelo Monitor</label><input type="text" id="pc-modelo-monitor" placeholder="Modelo"></div>
-              <div class="field"><label>N° Serie Monitor</label><input type="text" id="pc-serie-monitor" placeholder="N° de Serie"></div>
+              <div class="field" id="wrap-monitor"><label>¿Tiene Monitor?</label><input type="text" id="pc-monitor" value="SI"></div>
+              <div class="field" id="wrap-marca-monitor"><label>Marca Monitor</label><input type="text" id="pc-marca-monitor" placeholder="Marca"></div>
+              <div class="field" id="wrap-modelo-monitor"><label>Modelo Monitor</label><input type="text" id="pc-modelo-monitor" placeholder="Modelo"></div>
+              <div class="field" id="wrap-serie-monitor"><label>N° Serie Monitor</label><input type="text" id="pc-serie-monitor" placeholder="N° de Serie"></div>
             </div>
           </div>
 
           <div class="panel">
             <h3>Ubicación y datos de red</h3>
             <div class="form-grid">
-              <div class="field"><label>Área de Asignación</label><input type="text" id="pc-area" required placeholder="Ej. RRHH"></div>
+              <div class="field"><label>Área de Asignación</label><input type="text" id="pc-area" placeholder="Ej. RRHH (puede quedar vacío)"></div>
               <div class="field"><label>Código BAC</label><input type="text" id="pc-bac" value="S/N"></div>
               <div class="field"><label>Dirección MAC</label><input type="text" id="pc-mac" required placeholder="00-00-00-00-00-00"></div>
               <div class="field"><label>Base Destino</label><input type="text" id="pc-base" required placeholder="Ej. LURO"></div>
@@ -95,10 +113,11 @@
             <table class="data-table" id="tabla-inventario">
               <thead>
                 <tr>
-                  <th>ID</th><th>Marca</th><th>Modelo</th><th>Procesador</th><th>Motherboard</th>
+                  <th>ID</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Procesador</th><th>Motherboard</th>
                   <th>N° de Serie</th><th>Monitor</th><th>Marca Monitor</th><th>Modelo Monitor</th>
                   <th>N° de Serie Monitor</th><th>Disco</th><th>Disco 2</th><th>Ram</th><th>Parlantes</th>
-                  <th>Placa Wifi</th><th>Área Asignación</th><th>BAC</th><th>MAC</th><th>BASE</th>
+                  <th>Placa Wifi</th><th>Batería</th><th>Cargador</th><th>Pantalla</th>
+                  <th>Área Asignación</th><th>BAC</th><th>MAC</th><th>BASE</th>
                 </tr>
               </thead>
               <tbody></tbody>

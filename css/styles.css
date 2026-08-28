@@ -503,6 +503,10 @@ code.clave-visible {
   font-style: italic;
 }
 
+.hidden {
+  display: none !important;
+}
+
 .card-link {
   display: block;
   text-decoration: none;

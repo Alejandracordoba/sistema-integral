@@ -102,8 +102,8 @@ function renderTodoStock() {
     const resto = usoTotal % UMBRAL_PEDIDO;
     htmlUso += `Gasto total acumulado: ${usoTotal} tóners\n`;
     htmlUso +=
-      resto === 0
-        ? `→ ¡Completaste ${UMBRAL_PEDIDO}! Registrá el pedido.\n`
+      usoTotal > 0 && resto === 0
+        ? `🚨 ¡HACER PEDIDO! Completaste ${UMBRAL_PEDIDO} tóners gastados en total.\n`
         : `Próximo pedido de ${UMBRAL_PEDIDO} en: ${UMBRAL_PEDIDO - resto} usados\n`;
   }
 
@@ -144,18 +144,20 @@ async function inicializarContadorGlobal() {
 
 async function sincronizarPedidos() {
   const bloquesCompletos = Math.floor(usoTotal / UMBRAL_PEDIDO);
-  if (bloquesCompletos <= bloquesPedidos) return;
+  if (bloquesCompletos <= bloquesPedidos) return false;
 
   const pendientes = bloquesCompletos - bloquesPedidos;
-  const claves = Object.keys(configPedido || {}).filter((c) => configPedido[c] > 0);
+  const clavesConfig = Object.keys(configPedido || {}).filter((c) => configPedido[c] > 0);
+  const items =
+    clavesConfig.length > 0
+      ? clavesConfig.map((codigo) => ({ codigo, cantidad: configPedido[codigo] }))
+      : sugerirComposicion();
 
-  if (claves.length === 0) {
-    bannerPedido.classList.remove("hidden");
-    bannerPedido.innerHTML = `📦 Tenés <strong>${pendientes} pedido(s) de 7 pendientes</strong> de registrar. Definí la composición del pedido en la pestaña "Ajustar / Cargar stock".`;
-    return;
-  }
+  const resumen =
+    items.length > 0
+      ? `Reponer: ${items.map((it) => `${it.cantidad}×${it.codigo}`).join(", ")}`
+      : "Definí la composición del pedido en la pestaña 'Ajustar / Cargar stock'.";
 
-  const items = claves.map((codigo) => ({ codigo, cantidad: configPedido[codigo] }));
   const ajustes = {};
   for (let i = 0; i < pendientes; i++) {
     const key = push(ref(db, "toners/pedidos")).key;
@@ -172,7 +174,25 @@ async function sincronizarPedidos() {
   await update(ref(db), ajustes);
 
   bannerPedido.classList.remove("hidden");
-  bannerPedido.innerHTML = `📦 Se registraron <strong>${pendientes} pedido(s)</strong> de ${UMBRAL_PEDIDO} tóners. <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener" class="btn btn-secondary">Ir a dcgservicios.com.ar</a>`;
+  bannerPedido.innerHTML = `
+    <div class="pedido-alerta">
+      <div class="pedido-alerta-titulo">🔔 ¡HACER PEDIDO!</div>
+      <div>Sumaste <strong>${UMBRAL_PEDIDO} tóners gastados en total</strong> → hay <strong>${pendientes} pedido(s)</strong> a realizar.</div>
+      <div class="pedido-alerta-detalle">${resumen}</div>
+      <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener" class="btn btn-secondary">Ir a dcgservicios.com.ar</a>
+    </div>`;
+  return true;
+}
+
+function sugerirComposicion() {
+  const sugerencia = [];
+  Object.keys(stockLocal).forEach((codigo) => {
+    const objetivo = OBJETIVO[codigo];
+    if (objetivo === undefined) return;
+    const faltan = objetivo - (stockLocal[codigo] ?? 0);
+    if (faltan > 0) sugerencia.push({ codigo, cantidad: faltan });
+  });
+  return sugerencia;
 }
 
 function crearOpcion(codigo) {
@@ -235,10 +255,19 @@ document.getElementById("btn-registrar").addEventListener("click", async () => {
   });
 
   const nuevoTotal = usoTotal + 1;
+  const completoPedido = nuevoTotal % UMBRAL_PEDIDO === 0;
   await set(ref(db, "toners/uso"), nuevoTotal);
   usoTotal = nuevoTotal;
   renderTodoStock();
   await sincronizarPedidos();
+
+  if (completoPedido) {
+    const aviso = document.getElementById("aviso-egreso");
+    if (aviso) {
+      aviso.classList.remove("hidden");
+      aviso.innerHTML = `🔔 <strong>¡HACER PEDIDO!</strong> Con este egreso completaste los <strong>${UMBRAL_PEDIDO} tóners gastados en total</strong>. Hacé el pedido a <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener">dcgservicios.com.ar</a>.`;
+    }
+  }
 
   txtArea.value = "";
 });

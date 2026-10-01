@@ -64,23 +64,8 @@ onValue(ref(db, "toners/uso"), (snap) => {
   } else {
     usoTotal = valor;
   }
-  const numUso = document.getElementById("num-uso");
-  if (numUso) numUso.value = usoTotal;
   renderTodoStock();
   actualizarBannerPedido();
-});
-
-document.getElementById("btn-guardar-uso").addEventListener("click", async () => {
-  const valor = parseInt(document.getElementById("num-uso").value);
-  if (isNaN(valor) || valor < 0) {
-    alert("Ingresá un número válido.");
-    return;
-  }
-  await set(ref(db, "toners/uso"), valor);
-  usoTotal = valor;
-  renderTodoStock();
-  actualizarBannerPedido();
-  alert("Contador actualizado.");
 });
 
 onValue(ref(db, "toners/pedido_config"), (snap) => {
@@ -105,17 +90,7 @@ function renderTodoStock() {
     htmlStock += `${codigo.padEnd(12, " ")} ${(color ? "[" + color + "]" : "").padEnd(10, " ")} | ${cantidad} unidades${objetivo !== undefined ? ` (objetivo: ${objetivo})` : ""}${alerta}\n`;
   });
 
-  let htmlUso = "\n";
-  if (codigos.length > 0) {
-    htmlUso += `Tóners gastados desde el último pedido: ${usoTotal}\n`;
-    if (usoTotal >= UMBRAL_PEDIDO) {
-      htmlUso += `🚨 ¡HACER PEDIDO! Se completaron ${UMBRAL_PEDIDO} tóners gastados.\n`;
-    } else {
-      htmlUso += `Próximo pedido de ${UMBRAL_PEDIDO} en: ${UMBRAL_PEDIDO - usoTotal} tóner(s)\n`;
-    }
-  }
-
-  const textoTotal = (htmlStock || "Sin códigos cargados.") + htmlUso;
+  const textoTotal = htmlStock || "Sin códigos cargados.";
   vistaStock1.textContent = textoTotal;
   vistaStock2.textContent = textoTotal;
   actualizarInputNumerico();
@@ -140,22 +115,10 @@ function actualizarBannerPedido() {
   bannerPedido.innerHTML = `
     <div class="pedido-alerta">
       <div class="pedido-alerta-titulo">🔔 ¡HACER PEDIDO!</div>
-      <div>Vas por <strong>${usoTotal} tóners gastados en total</strong>.</div>
       <div class="pedido-alerta-detalle">${resumen}</div>
       <div style="margin-top: 8px;">${pendientes}</div>
       <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener" class="btn btn-secondary">🌐 Ingresar a la web del proveedor</a>
-      <button id="btn-reiniciar" class="btn" style="margin-top:8px;">✅ Ya realicé el pedido (reiniciar a 0)</button>
     </div>`;
-
-  const btnReiniciar = document.getElementById("btn-reiniciar");
-  if (btnReiniciar) {
-    btnReiniciar.addEventListener("click", async () => {
-      await set(ref(db, "toners/uso"), 0);
-      usoTotal = 0;
-      renderTodoStock();
-      actualizarBannerPedido();
-    });
-  }
 }
 
 function sugerirComposicion() {
@@ -240,7 +203,7 @@ document.getElementById("btn-registrar").addEventListener("click", async () => {
     if (aviso) {
       aviso.classList.remove("hidden");
       aviso.innerHTML = `
-        <div>🔔 <strong>¡HACER PEDIDO!</strong> Con este egreso completaste los <strong>${UMBRAL_PEDIDO} tóners gastados en total</strong>.</div>
+        <div class="pedido-alerta-titulo">🔔 ¡HACER PEDIDO!</div>
         <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener" class="btn btn-secondary">🌐 Ingresar a la web del proveedor</a>`;
     }
   }
@@ -267,6 +230,12 @@ document.getElementById("btn-guardar-stock").addEventListener("click", async () 
     llegada,
     stockResultante: nuevo
   });
+
+  await set(ref(db, "toners/uso"), 0);
+  usoTotal = 0;
+  renderTodoStock();
+  actualizarBannerPedido();
+
   alert(`Llegada de ${llegada} tóners de ${codigo} registrada. El stock quedó en ${nuevo} unidades (${actual} + ${llegada}).`);
 });
 

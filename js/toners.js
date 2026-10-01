@@ -47,11 +47,7 @@ async function corregirContadorUso() {
     const marcador = await get(ref(db, "toners/uso_corregido_v2"));
     if (marcador.exists()) return;
 
-    const histSnap = await get(ref(db, "toners/historial"));
-    let egresos = 0;
-    histSnap.forEach(() => egresos++);
-
-    await set(ref(db, "toners/uso"), egresos);
+    await set(ref(db, "toners/uso"), 6);
     await set(ref(db, "toners/uso_corregido_v2"), true);
   } catch (err) {
     console.error("No se pudo corregir el contador:", err);

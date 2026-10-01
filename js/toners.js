@@ -59,11 +59,12 @@ onValue(ref(db, "toners/stock"), (snap) => {
 });
 
 onValue(ref(db, "toners/uso"), (snap) => {
-  if (!snap.exists() && !analisisInicial) {
+  const valor = snap.val();
+  if (valor == null || typeof valor === "object") {
     usoTotal = 0;
     inicializarContadorGlobal();
   } else {
-    usoTotal = snap.val() ?? usoTotal;
+    usoTotal = valor;
   }
   renderTodoStock();
   sincronizarPedidos();
@@ -88,9 +89,12 @@ function renderTodoStock() {
   let htmlStock = "";
   codigos.forEach((codigo) => {
     const cantidad = stockLocal[codigo] ?? 0;
+    const color = colorDe(codigo);
     comboRegistrar.appendChild(crearOpcion(codigo));
     comboAjustar.appendChild(crearOpcion(codigo));
-    htmlStock += `${codigo.padEnd(12, " ")} | ${cantidad} unidades\n`;
+    const objetivo = OBJETIVO[codigo];
+    const alerta = objetivo !== undefined && cantidad >= objetivo ? "" : " ← faltan para el objetivo";
+    htmlStock += `${codigo.padEnd(12, " ")} ${(color ? "[" + color + "]" : "").padEnd(10, " ")} | ${cantidad} unidades${objetivo !== undefined ? ` (objetivo: ${objetivo})` : ""}${alerta}\n`;
   });
 
   let htmlUso = "\n";
@@ -122,8 +126,16 @@ async function inicializarContadorGlobal() {
       const reg = child.val();
       if (reg && reg.codigo) total++;
     });
-    await set(ref(db, "toners/uso"), total);
+
+    const bloques = Math.floor(total / UMBRAL_PEDIDO);
     usoTotal = total;
+    bloquesPedidos = bloques;
+
+    await update(ref(db), {
+      "toners/uso": total,
+      "toners/pedidos_hechos": bloquesPedidos
+    });
+
     renderTodoStock();
   } catch (err) {
     console.error("No se pudo analizar el historial:", err);
@@ -166,17 +178,35 @@ async function sincronizarPedidos() {
 function crearOpcion(codigo) {
   const opt = document.createElement("option");
   opt.value = codigo;
-  opt.textContent = codigo;
+  opt.textContent = colorDe(codigo) ? `${codigo} · ${colorDe(codigo)}` : codigo;
   return opt;
+}
+
+const COLORES = {
+  "75M4XC0": "Cyan",
+  "75M4XK0": "Negro",
+  "75M4XM0": "Magenta",
+  "75M4XY0": "Amarillo",
+  "75M4XYO": "Amarillo"
+};
+
+const OBJETIVO = {
+  "66S4H00": 8,
+  "75M4XC0": 1,
+  "75M4XK0": 1,
+  "75M4XM0": 1,
+  "75M4XY0": 1,
+  "75M4XYO": 1
+};
+
+function colorDe(codigo) {
+  return COLORES[codigo] || "";
 }
 
 comboAjustar.addEventListener("change", actualizarInputNumerico);
 
 function actualizarInputNumerico() {
-  const seleccionado = comboAjustar.value;
-  if (seleccionado && stockLocal[seleccionado] !== undefined) {
-    numStock.value = stockLocal[seleccionado];
-  }
+  numStock.value = "";
 }
 
 document.getElementById("btn-registrar").addEventListener("click", async () => {
@@ -300,7 +330,9 @@ function renderConfigPedido() {
   cont.innerHTML = codigos
     .map((codigo) => {
       const valor = configPedido[codigo] ?? 0;
-      return `<div class="config-fila"><span>${escapeHtml(codigo)}</span><input type="number" min="0" max="7" value="${valor}" data-codigo="${escapeHtml(codigo)}"></div>`;
+      const color = colorDe(codigo);
+      const label = color ? `${codigo} <span class="config-color">(${color})</span>` : escapeHtml(codigo);
+      return `<div class="config-fila"><span>${label}</span><input type="number" min="0" max="7" value="${valor}" data-codigo="${escapeHtml(codigo)}"></div>`;
     })
     .join("");
 

@@ -566,6 +566,11 @@ code.clave-visible {
   width: 70px;
 }
 
+.config-color {
+  color: #888;
+  font-size: 0.85rem;
+}
+
 .hidden {
   display: none !important;
 }

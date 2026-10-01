@@ -542,6 +542,30 @@ code.clave-visible {
   margin-top: 8px;
 }
 
+.config-pedido {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 420px;
+  margin-bottom: 8px;
+}
+
+.config-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface-elevated, rgba(0,0,0,0.02));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+.config-fila input {
+  width: 70px;
+}
+
 .hidden {
   display: none !important;
 }

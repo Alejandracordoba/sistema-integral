@@ -98,9 +98,20 @@
         </div>
 
         <div class="panel">
+          <h3>Composición del pedido automático</h3>
+          <p class="section-subtitle">
+            Al completar 7 tóners <strong>gastados en total</strong>, se registra un pedido. Definí
+            cuántas unidades de cada código entra en ese pedido (tiene que sumar exactamente 7):
+          </p>
+          <div id="config-pedido" class="config-pedido"></div>
+          <p class="hint" id="config-total"></p>
+          <button id="btn-guardar-config" class="btn" style="max-width: 260px; margin-top: 6px;">Guardar composición</button>
+        </div>
+
+        <div class="panel">
           <h3>Pedidos a la empresa de insumos</h3>
           <p class="section-subtitle">
-            Cada 7 tóners usados se registra un pedido de 7 nuevos. Pedidos registrados:
+            Cada 7 tóners gastados se registra un pedido de 7 nuevos. Pedidos registrados:
           </p>
           <div class="table-scroll">
             <table class="data-table" id="tabla-pedidos">

@@ -21,7 +21,9 @@ const URL_PROVEEDOR = "https://dcgservicios.com.ar/Account/Login?ReturnUrl=%2f";
 const UMBRAL_PEDIDO = 7;
 
 let stockLocal = {};
-let usosLocal = {};
+let usoTotal = 0;
+let bloquesPedidos = 0;
+let configPedido = {};
 
 const tabButtons = document.querySelectorAll(".tab-btn[data-tab]");
 tabButtons.forEach((btn) => {
@@ -53,12 +55,28 @@ onValue(ref(db, ".info/connected"), (snap) => {
 onValue(ref(db, "toners/stock"), (snap) => {
   stockLocal = snap.val() || {};
   renderTodoStock();
+  renderConfigPedido();
 });
 
 onValue(ref(db, "toners/uso"), (snap) => {
-  usosLocal = snap.val() || {};
+  if (!snap.exists() && !analisisInicial) {
+    usoTotal = 0;
+    inicializarContadorGlobal();
+  } else {
+    usoTotal = snap.val() ?? usoTotal;
+  }
   renderTodoStock();
-  analizarPedidoPendiente();
+  sincronizarPedidos();
+});
+
+onValue(ref(db, "toners/pedidos_hechos"), (snap) => {
+  bloquesPedidos = snap.val() ?? 0;
+});
+
+onValue(ref(db, "toners/pedido_config"), (snap) => {
+  configPedido = snap.val() || {};
+  renderConfigPedido();
+  sincronizarPedidos();
 });
 
 function renderTodoStock() {
@@ -76,14 +94,14 @@ function renderTodoStock() {
   });
 
   let htmlUso = "\n";
-  codigos.forEach((codigo) => {
-    const usados = usosLocal[codigo] ?? 0;
-    const resto = usados % UMBRAL_PEDIDO;
-    const faltan = UMBRAL_PEDIDO - resto;
-    htmlUso += `${codigo.padEnd(12, " ")} | ${resto}/${UMBRAL_PEDIDO} usados (pedís en ${faltan})`;
-    if (resto === 0) htmlUso += ` → ¡Pedí ${UMBRAL_PEDIDO}!`;
-    htmlUso += "\n";
-  });
+  if (codigos.length > 0) {
+    const resto = usoTotal % UMBRAL_PEDIDO;
+    htmlUso += `Gasto total acumulado: ${usoTotal} tóners\n`;
+    htmlUso +=
+      resto === 0
+        ? `→ ¡Completaste ${UMBRAL_PEDIDO}! Registrá el pedido.\n`
+        : `Próximo pedido de ${UMBRAL_PEDIDO} en: ${UMBRAL_PEDIDO - resto} usados\n`;
+  }
 
   const textoTotal = (htmlStock || "Sin códigos cargados.") + htmlUso;
   vistaStock1.textContent = textoTotal;
@@ -93,58 +111,56 @@ function renderTodoStock() {
 
 let analisisInicial = false;
 
-async function analizarPedidoPendiente() {
+async function inicializarContadorGlobal() {
   if (analisisInicial) return;
-  if (Object.keys(usosLocal).length > 0) return;
   analisisInicial = true;
 
   try {
     const histSnap = await get(ref(db, "toners/historial"));
-    const usosPorCodigo = {};
-
+    let total = 0;
     histSnap.forEach((child) => {
       const reg = child.val();
-      if (!reg || !reg.codigo) return;
-      usosPorCodigo[reg.codigo] = (usosPorCodigo[reg.codigo] || 0) + 1;
+      if (reg && reg.codigo) total++;
     });
-
-    const ajustes = {};
-    let deboPedir = false;
-
-    for (const codigo in usosPorCodigo) {
-      const totalUsados = usosPorCodigo[codigo];
-      const pedidosGenerados = Math.floor(totalUsados / UMBRAL_PEDIDO);
-
-      for (let i = 0; i < pedidosGenerados; i++) {
-        const registro = {
-          fecha: new Date().toLocaleString("es-AR"),
-          codigo,
-          cantidad: UMBRAL_PEDIDO,
-          motivo: "cada 7 usados",
-          url: URL_PROVEEDOR,
-          estado: "pendiente"
-        };
-        const key = push(ref(db, "toners/pedidos")).key;
-        ajustes[`toners/pedidos/${key}`] = registro;
-      }
-
-      if (pedidosGenerados > 0) {
-        ajustes[`toners/uso/${codigo}`] = totalUsados % UMBRAL_PEDIDO;
-        deboPedir = true;
-      }
-    }
-
-    if (Object.keys(ajustes).length > 0) {
-      await update(ref(db), ajustes);
-    }
-
-    if (deboPedir) {
-      bannerPedido.classList.remove("hidden");
-      bannerPedido.innerHTML = `<strong>📦 Tenés pedidos pendientes</strong>: según el historial se usaron varios tóners. Verificá la lista de pedidos. <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener" class="btn btn-secondary">Ir a dcgservicios.com.ar</a>`;
-    }
+    await set(ref(db, "toners/uso"), total);
+    usoTotal = total;
+    renderTodoStock();
   } catch (err) {
     console.error("No se pudo analizar el historial:", err);
   }
+}
+
+async function sincronizarPedidos() {
+  const bloquesCompletos = Math.floor(usoTotal / UMBRAL_PEDIDO);
+  if (bloquesCompletos <= bloquesPedidos) return;
+
+  const pendientes = bloquesCompletos - bloquesPedidos;
+  const claves = Object.keys(configPedido || {}).filter((c) => configPedido[c] > 0);
+
+  if (claves.length === 0) {
+    bannerPedido.classList.remove("hidden");
+    bannerPedido.innerHTML = `📦 Tenés <strong>${pendientes} pedido(s) de 7 pendientes</strong> de registrar. Definí la composición del pedido en la pestaña "Ajustar / Cargar stock".`;
+    return;
+  }
+
+  const items = claves.map((codigo) => ({ codigo, cantidad: configPedido[codigo] }));
+  const ajustes = {};
+  for (let i = 0; i < pendientes; i++) {
+    const key = push(ref(db, "toners/pedidos")).key;
+    ajustes[`toners/pedidos/${key}`] = {
+      fecha: new Date().toLocaleString("es-AR"),
+      items,
+      total: items.reduce((s, it) => s + it.cantidad, 0),
+      motivo: "cada 7 usados (total)",
+      url: URL_PROVEEDOR,
+      estado: "pendiente"
+    };
+  }
+  ajustes["toners/pedidos_hechos"] = bloquesCompletos;
+  await update(ref(db), ajustes);
+
+  bannerPedido.classList.remove("hidden");
+  bannerPedido.innerHTML = `📦 Se registraron <strong>${pendientes} pedido(s)</strong> de ${UMBRAL_PEDIDO} tóners. <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener" class="btn btn-secondary">Ir a dcgservicios.com.ar</a>`;
 }
 
 function crearOpcion(codigo) {
@@ -188,21 +204,11 @@ document.getElementById("btn-registrar").addEventListener("click", async () => {
     remanente: cant - 1
   });
 
-  const usados = (usosLocal[codigo] ?? 0) + 1;
-  await set(ref(db, `toners/uso/${codigo}`), usados);
-
-  if (usados % UMBRAL_PEDIDO === 0) {
-    await push(ref(db, "toners/pedidos"), {
-      fecha: new Date().toLocaleString("es-AR"),
-      codigo,
-      cantidad: UMBRAL_PEDIDO,
-      motivo: "cada 7 usados",
-      url: URL_PROVEEDOR,
-      estado: "pendiente"
-    });
-    bannerPedido.classList.remove("hidden");
-    bannerPedido.innerHTML = `<strong>📦 Pedí ${UMBRAL_PEDIDO} tóners nuevos de ${escapeHtml(codigo)}</strong> — se usaron ${usados} en total. <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener" class="btn btn-secondary">Ir a dcgservicios.com.ar</a>`;
-  }
+  const nuevoTotal = usoTotal + 1;
+  await set(ref(db, "toners/uso"), nuevoTotal);
+  usoTotal = nuevoTotal;
+  renderTodoStock();
+  await sincronizarPedidos();
 
   txtArea.value = "";
 });
@@ -266,18 +272,63 @@ function renderPedidos(pedidos) {
   }
 
   tablaPedidos.innerHTML = pedidos
-    .map(
-      (p) => `
-      <tr>
-        <td class="muted-cell">${escapeHtml(p.fecha)}</td>
-        <td><span class="badge">${escapeHtml(p.codigo)}</span></td>
-        <td>${p.cantidad ?? ""} u.</td>
-        <td>${escapeHtml(p.motivo)}</td>
-        <td><a href="${escapeHtml(p.url || URL_PROVEEDOR)}" target="_blank" rel="noopener" class="btn btn-secondary">Pedir</a></td>
-      </tr>`
-    )
+    .map((p) => {
+      const detalle = p.items
+        ? p.items.map((it) => `${it.codigo}:${it.cantidad}`).join(", ")
+        : `${p.codigo}:${p.cantidad ?? ""}`;
+      return `
+        <tr>
+          <td class="muted-cell">${escapeHtml(p.fecha)}</td>
+          <td><span class="badge">${escapeHtml(detalle)}</span></td>
+          <td>${p.total ?? ""} u.</td>
+          <td>${escapeHtml(p.motivo)}</td>
+          <td><a href="${escapeHtml(p.url || URL_PROVEEDOR)}" target="_blank" rel="noopener" class="btn btn-secondary">Pedir</a></td>
+        </tr>`;
+    })
     .join("");
 }
+
+function renderConfigPedido() {
+  const cont = document.getElementById("config-pedido");
+  if (!cont) return;
+  const codigos = Object.keys(stockLocal).sort();
+  if (codigos.length === 0) {
+    cont.innerHTML = '<p class="hint">No hay códigos cargados todavía.</p>';
+    return;
+  }
+
+  cont.innerHTML = codigos
+    .map((codigo) => {
+      const valor = configPedido[codigo] ?? 0;
+      return `<div class="config-fila"><span>${escapeHtml(codigo)}</span><input type="number" min="0" max="7" value="${valor}" data-codigo="${escapeHtml(codigo)}"></div>`;
+    })
+    .join("");
+
+  const total = Object.values(configPedido).reduce((a, b) => a + b, 0);
+  const elTotal = document.getElementById("config-total");
+  if (elTotal) {
+    elTotal.textContent = `El pedido compone ${total} de ${UMBRAL_PEDIDO} unidades.`;
+  }
+}
+
+document.getElementById("btn-guardar-config").addEventListener("click", async () => {
+  const nuevoConfig = {};
+  document.querySelectorAll("#config-pedido input").forEach((input) => {
+    const cantidad = parseInt(input.value) || 0;
+    if (cantidad > 0) nuevoConfig[input.dataset.codigo] = cantidad;
+  });
+
+  const total = Object.values(nuevoConfig).reduce((a, b) => a + b, 0);
+  if (total !== UMBRAL_PEDIDO) {
+    alert(`La composición debe sumar exactamente ${UMBRAL_PEDIDO} unidades. Actualmente suma ${total}.`);
+    return;
+  }
+
+  await set(ref(db, "toners/pedido_config"), nuevoConfig);
+  alert("Composición de pedido guardada.");
+  bannerPedido.classList.add("hidden");
+  await sincronizarPedidos();
+});
 
 function renderHistorial(registros) {
   if (registros.length === 0) {

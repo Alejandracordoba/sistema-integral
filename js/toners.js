@@ -265,7 +265,9 @@ document.getElementById("btn-registrar").addEventListener("click", async () => {
     const aviso = document.getElementById("aviso-egreso");
     if (aviso) {
       aviso.classList.remove("hidden");
-      aviso.innerHTML = `🔔 <strong>¡HACER PEDIDO!</strong> Con este egreso completaste los <strong>${UMBRAL_PEDIDO} tóners gastados en total</strong>. Hacé el pedido a <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener">dcgservicios.com.ar</a>.`;
+      aviso.innerHTML = `
+        <div>🔔 <strong>¡HACER PEDIDO!</strong> Con este egreso completaste los <strong>${UMBRAL_PEDIDO} tóners gastados en total</strong>.</div>
+        <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener" class="btn btn-secondary">🌐 Ingresar a la web del proveedor</a>`;
     }
   }
 

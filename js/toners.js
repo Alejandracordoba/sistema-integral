@@ -1,4 +1,4 @@
-import { ref, onValue, update, push, remove, get, set } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+import { ref, onValue, update, push, remove, set } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import { auth, db } from "./firebase-config.js";
 
@@ -22,7 +22,6 @@ const UMBRAL_PEDIDO = 7;
 
 let stockLocal = {};
 let usoTotal = 0;
-let bloquesPedidos = 0;
 let configPedido = {};
 
 const tabButtons = document.querySelectorAll(".tab-btn[data-tab]");
@@ -62,22 +61,31 @@ onValue(ref(db, "toners/uso"), (snap) => {
   const valor = snap.val();
   if (valor == null || typeof valor === "object") {
     usoTotal = 0;
-    inicializarContadorGlobal();
   } else {
     usoTotal = valor;
   }
+  const numUso = document.getElementById("num-uso");
+  if (numUso) numUso.value = usoTotal;
   renderTodoStock();
-  sincronizarPedidos();
+  actualizarBannerPedido();
 });
 
-onValue(ref(db, "toners/pedidos_hechos"), (snap) => {
-  bloquesPedidos = snap.val() ?? 0;
+document.getElementById("btn-guardar-uso").addEventListener("click", async () => {
+  const valor = parseInt(document.getElementById("num-uso").value);
+  if (isNaN(valor) || valor < 0) {
+    alert("Ingresá un número válido.");
+    return;
+  }
+  await set(ref(db, "toners/uso"), valor);
+  usoTotal = valor;
+  renderTodoStock();
+  actualizarBannerPedido();
+  alert("Contador actualizado.");
 });
 
 onValue(ref(db, "toners/pedido_config"), (snap) => {
   configPedido = snap.val() || {};
   renderConfigPedido();
-  sincronizarPedidos();
 });
 
 function renderTodoStock() {
@@ -99,12 +107,12 @@ function renderTodoStock() {
 
   let htmlUso = "\n";
   if (codigos.length > 0) {
-    const resto = usoTotal % UMBRAL_PEDIDO;
-    htmlUso += `Gasto total acumulado: ${usoTotal} tóners\n`;
-    htmlUso +=
-      usoTotal > 0 && resto === 0
-        ? `🚨 ¡HACER PEDIDO! Completaste ${UMBRAL_PEDIDO} tóners gastados en total.\n`
-        : `Próximo pedido de ${UMBRAL_PEDIDO} en: ${UMBRAL_PEDIDO - resto} usados\n`;
+    htmlUso += `Tóners gastados desde el último pedido: ${usoTotal}\n`;
+    if (usoTotal >= UMBRAL_PEDIDO) {
+      htmlUso += `🚨 ¡HACER PEDIDO! Se completaron ${UMBRAL_PEDIDO} tóners gastados.\n`;
+    } else {
+      htmlUso += `Próximo pedido de ${UMBRAL_PEDIDO} en: ${UMBRAL_PEDIDO - usoTotal} tóner(s)\n`;
+    }
   }
 
   const textoTotal = (htmlStock || "Sin códigos cargados.") + htmlUso;
@@ -113,75 +121,41 @@ function renderTodoStock() {
   actualizarInputNumerico();
 }
 
-let analisisInicial = false;
+function actualizarBannerPedido() {
+  bannerPedido.classList.toggle("hidden", usoTotal < UMBRAL_PEDIDO);
+  if (usoTotal < UMBRAL_PEDIDO) return;
 
-async function inicializarContadorGlobal() {
-  if (analisisInicial) return;
-  analisisInicial = true;
+  const resto = usoTotal % UMBRAL_PEDIDO;
+  const pendientes =
+    resto < 1
+      ? ""
+      : `${UMBRAL_PEDIDO - resto} tóner(s) más hasta completar el próximo pedido.`;
 
-  try {
-    const histSnap = await get(ref(db, "toners/historial"));
-    let total = 0;
-    histSnap.forEach((child) => {
-      const reg = child.val();
-      if (reg && reg.codigo) total++;
-    });
-
-    const bloques = Math.floor(total / UMBRAL_PEDIDO);
-    usoTotal = total;
-    bloquesPedidos = bloques;
-
-    await update(ref(db), {
-      "toners/uso": total,
-      "toners/pedidos_hechos": bloquesPedidos
-    });
-
-    renderTodoStock();
-  } catch (err) {
-    console.error("No se pudo analizar el historial:", err);
-  }
-}
-
-async function sincronizarPedidos() {
-  const bloquesCompletos = Math.floor(usoTotal / UMBRAL_PEDIDO);
-  if (bloquesCompletos <= bloquesPedidos) return false;
-
-  const pendientes = bloquesCompletos - bloquesPedidos;
-  const clavesConfig = Object.keys(configPedido || {}).filter((c) => configPedido[c] > 0);
-  const items =
-    clavesConfig.length > 0
-      ? clavesConfig.map((codigo) => ({ codigo, cantidad: configPedido[codigo] }))
-      : sugerirComposicion();
-
+  const items = sugerirComposicion();
   const resumen =
     items.length > 0
-      ? `Reponer: ${items.map((it) => `${it.cantidad}×${it.codigo}`).join(", ")}`
+      ? `Reponer recomendado: ${items.map((it) => `${it.cantidad}×${it.codigo}`).join(", ")}`
       : "Definí la composición del pedido en la pestaña 'Ajustar / Cargar stock'.";
 
-  const ajustes = {};
-  for (let i = 0; i < pendientes; i++) {
-    const key = push(ref(db, "toners/pedidos")).key;
-    ajustes[`toners/pedidos/${key}`] = {
-      fecha: new Date().toLocaleString("es-AR"),
-      items,
-      total: items.reduce((s, it) => s + it.cantidad, 0),
-      motivo: "cada 7 usados (total)",
-      url: URL_PROVEEDOR,
-      estado: "pendiente"
-    };
-  }
-  ajustes["toners/pedidos_hechos"] = bloquesCompletos;
-  await update(ref(db), ajustes);
-
-  bannerPedido.classList.remove("hidden");
   bannerPedido.innerHTML = `
     <div class="pedido-alerta">
       <div class="pedido-alerta-titulo">🔔 ¡HACER PEDIDO!</div>
-      <div>Sumaste <strong>${UMBRAL_PEDIDO} tóners gastados en total</strong> → hay <strong>${pendientes} pedido(s)</strong> a realizar.</div>
+      <div>Vas por <strong>${usoTotal} tóners gastados en total</strong>.</div>
       <div class="pedido-alerta-detalle">${resumen}</div>
-      <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener" class="btn btn-secondary">Ir a dcgservicios.com.ar</a>
+      <div style="margin-top: 8px;">${pendientes}</div>
+      <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener" class="btn btn-secondary">🌐 Ingresar a la web del proveedor</a>
+      <button id="btn-reiniciar" class="btn" style="margin-top:8px;">✅ Ya realicé el pedido (reiniciar a 0)</button>
     </div>`;
-  return true;
+
+  const btnReiniciar = document.getElementById("btn-reiniciar");
+  if (btnReiniciar) {
+    btnReiniciar.addEventListener("click", async () => {
+      await set(ref(db, "toners/uso"), 0);
+      usoTotal = 0;
+      renderTodoStock();
+      actualizarBannerPedido();
+    });
+  }
 }
 
 function sugerirComposicion() {
@@ -259,7 +233,7 @@ document.getElementById("btn-registrar").addEventListener("click", async () => {
   await set(ref(db, "toners/uso"), nuevoTotal);
   usoTotal = nuevoTotal;
   renderTodoStock();
-  await sincronizarPedidos();
+  actualizarBannerPedido();
 
   if (completoPedido) {
     const aviso = document.getElementById("aviso-egreso");
@@ -328,7 +302,7 @@ onValue(ref(db, "toners/pedidos"), (snapshot) => {
 
 function renderPedidos(pedidos) {
   if (pedidos.length === 0) {
-    tablaPedidos.innerHTML = '<tr><td colspan="5" class="empty-state">Aún no hay pedidos registrados.</td></tr>';
+    tablaPedidos.innerHTML = '<tr><td colspan="6" class="empty-state">Aún no hay pedidos registrados.</td></tr>';
     return;
   }
 
@@ -344,10 +318,19 @@ function renderPedidos(pedidos) {
           <td>${p.total ?? ""} u.</td>
           <td>${escapeHtml(p.motivo)}</td>
           <td><a href="${escapeHtml(p.url || URL_PROVEEDOR)}" target="_blank" rel="noopener" class="btn btn-secondary">Pedir</a></td>
+          <td><button class="btn-delete" data-puedo-id="${p.id}">Borrar</button></td>
         </tr>`;
     })
     .join("");
 }
+
+tablaPedidos.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".btn-delete");
+  if (!btn) return;
+  const id = btn.dataset.puedoId;
+  if (!id || !confirm("¿Borrar este pedido del registro?")) return;
+  await remove(ref(db, `toners/pedidos/${id}`));
+});
 
 function renderConfigPedido() {
   const cont = document.getElementById("config-pedido");
@@ -389,8 +372,6 @@ document.getElementById("btn-guardar-config").addEventListener("click", async ()
 
   await set(ref(db, "toners/pedido_config"), nuevoConfig);
   alert("Composición de pedido guardada.");
-  bannerPedido.classList.add("hidden");
-  await sincronizarPedidos();
 });
 
 function renderHistorial(registros) {

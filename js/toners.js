@@ -22,7 +22,6 @@ const UMBRAL_PEDIDO = 7;
 
 let stockLocal = {};
 let usoTotal = 0;
-let configPedido = {};
 
 const tabButtons = document.querySelectorAll(".tab-btn[data-tab]");
 tabButtons.forEach((btn) => {
@@ -67,7 +66,6 @@ onValue(ref(db, ".info/connected"), (snap) => {
 onValue(ref(db, "toners/stock"), (snap) => {
   stockLocal = snap.val() || {};
   renderTodoStock();
-  renderConfigPedido();
 });
 
 onValue(ref(db, "toners/uso"), (snap) => {
@@ -79,11 +77,6 @@ onValue(ref(db, "toners/uso"), (snap) => {
   }
   renderTodoStock();
   actualizarBannerPedido();
-});
-
-onValue(ref(db, "toners/pedido_config"), (snap) => {
-  configPedido = snap.val() || {};
-  renderConfigPedido();
 });
 
 function renderTodoStock() {
@@ -113,36 +106,11 @@ function actualizarBannerPedido() {
   bannerPedido.classList.toggle("hidden", usoTotal < UMBRAL_PEDIDO);
   if (usoTotal < UMBRAL_PEDIDO) return;
 
-  const resto = usoTotal % UMBRAL_PEDIDO;
-  const pendientes =
-    resto < 1
-      ? ""
-      : `${UMBRAL_PEDIDO - resto} tóner(s) más hasta completar el próximo pedido.`;
-
-  const items = sugerirComposicion();
-  const resumen =
-    items.length > 0
-      ? `Reponer recomendado: ${items.map((it) => `${it.cantidad}×${it.codigo}`).join(", ")}`
-      : "Definí la composición del pedido en la pestaña 'Ajustar / Cargar stock'.";
-
   bannerPedido.innerHTML = `
     <div class="pedido-alerta">
       <div class="pedido-alerta-titulo">🔔 ¡HACER PEDIDO!</div>
-      <div class="pedido-alerta-detalle">${resumen}</div>
-      <div style="margin-top: 8px;">${pendientes}</div>
       <a href="${URL_PROVEEDOR}" target="_blank" rel="noopener" class="btn btn-secondary">🌐 Ingresar a la web del proveedor</a>
     </div>`;
-}
-
-function sugerirComposicion() {
-  const sugerencia = [];
-  Object.keys(stockLocal).forEach((codigo) => {
-    const objetivo = OBJETIVO[codigo];
-    if (objetivo === undefined) return;
-    const faltan = objetivo - (stockLocal[codigo] ?? 0);
-    if (faltan > 0) sugerencia.push({ codigo, cantidad: faltan });
-  });
-  return sugerencia;
 }
 
 function crearOpcion(codigo) {
@@ -312,48 +280,6 @@ tablaPedidos.addEventListener("click", async (e) => {
   const id = btn.dataset.puedoId;
   if (!id || !confirm("¿Borrar este pedido del registro?")) return;
   await remove(ref(db, `toners/pedidos/${id}`));
-});
-
-function renderConfigPedido() {
-  const cont = document.getElementById("config-pedido");
-  if (!cont) return;
-  const codigos = Object.keys(stockLocal).sort();
-  if (codigos.length === 0) {
-    cont.innerHTML = '<p class="hint">No hay códigos cargados todavía.</p>';
-    return;
-  }
-
-  cont.innerHTML = codigos
-    .map((codigo) => {
-      const valor = configPedido[codigo] ?? 0;
-      const color = colorDe(codigo);
-      const label = color ? `${codigo} <span class="config-color">(${color})</span>` : escapeHtml(codigo);
-      return `<div class="config-fila"><span>${label}</span><input type="number" min="0" max="7" value="${valor}" data-codigo="${escapeHtml(codigo)}"></div>`;
-    })
-    .join("");
-
-  const total = Object.values(configPedido).reduce((a, b) => a + b, 0);
-  const elTotal = document.getElementById("config-total");
-  if (elTotal) {
-    elTotal.textContent = `El pedido compone ${total} de ${UMBRAL_PEDIDO} unidades.`;
-  }
-}
-
-document.getElementById("btn-guardar-config").addEventListener("click", async () => {
-  const nuevoConfig = {};
-  document.querySelectorAll("#config-pedido input").forEach((input) => {
-    const cantidad = parseInt(input.value) || 0;
-    if (cantidad > 0) nuevoConfig[input.dataset.codigo] = cantidad;
-  });
-
-  const total = Object.values(nuevoConfig).reduce((a, b) => a + b, 0);
-  if (total !== UMBRAL_PEDIDO) {
-    alert(`La composición debe sumar exactamente ${UMBRAL_PEDIDO} unidades. Actualmente suma ${total}.`);
-    return;
-  }
-
-  await set(ref(db, "toners/pedido_config"), nuevoConfig);
-  alert("Composición de pedido guardada.");
 });
 
 function renderHistorial(registros) {

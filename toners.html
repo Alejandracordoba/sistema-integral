@@ -8,8 +8,8 @@
 </head>
 <body>
   <div class="app-layout">
-    <aside class="sidebar">
-      <div class="brand">Sistema Integral</div>
+<aside class="sidebar">
+      <div class="brand"><img src="img/logo.jpg" alt="Sistema Integral" class="brand-logo">Sistema Integral</div>
       <a class="nav-item" href="app.html">Inicio</a>
       <a class="nav-item active" href="toners.html">Control de Tóners</a>
       <a class="nav-item" href="inventario.html">Inventario PC</a>
@@ -36,8 +36,9 @@
       <section id="panel-registrar" class="tab-panel active">
         <div style="display: grid; grid-template-columns: minmax(280px, 1fr) 2fr; gap: 20px;">
           <div>
-            <div class="panel">
+<div class="panel">
               <h3>Registrar nuevo cambio</h3>
+              <div id="banner-pedido" class="banner-pedido hidden"></div>
               <div class="field">
                 <label for="txt-area">Área / Oficina</label>
                 <input type="text" id="txt-area" placeholder="Ej: Dirección">
@@ -81,7 +82,7 @@
         </div>
       </section>
 
-      <section id="panel-gestionar" class="tab-panel">
+<section id="panel-gestionar" class="tab-panel">
         <div class="panel" style="max-width: 640px;">
           <h3>Estado del inventario y ajustes</h3>
           <div id="vista-stock-2" class="stock-box" style="margin-bottom: 18px;">Cargando stock...</div>
@@ -90,10 +91,27 @@
             <select id="combo-codigos-2"></select>
           </div>
           <div class="field">
-            <label for="num-stock">Setear nueva cantidad (llegada de pedido)</label>
+            <label for="num-stock">Cantidad que llega (se suma al stock actual)</label>
             <input type="number" id="num-stock" min="0" value="0">
           </div>
-          <button id="btn-guardar-stock" class="btn" style="max-width: 260px;">Guardar nuevo stock</button>
+          <button id="btn-guardar-stock" class="btn" style="max-width: 260px;">Registrar llegada y sumar al stock</button>
+        </div>
+
+        <div class="panel">
+          <h3>Pedidos a la empresa de insumos</h3>
+          <p class="section-subtitle">
+            Cada 7 tóners usados se registra un pedido de 7 nuevos. Pedidos registrados:
+          </p>
+          <div class="table-scroll">
+            <table class="data-table" id="tabla-pedidos">
+              <thead>
+                <tr><th>Fecha</th><th>Código</th><th>Cantidad</th><th>Motivo</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="5" class="empty-state">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
